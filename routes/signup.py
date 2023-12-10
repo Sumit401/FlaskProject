@@ -1,7 +1,7 @@
 from flask import Blueprint,request,jsonify
 import smtplib
 from email.message import EmailMessage
-import math, random
+import random
 import re as RegularExpression
 import MySQLdb
 
@@ -23,8 +23,6 @@ def signup() :
             return jsonify({"success" : True,"message": "OTP sent to " +email}), 200
         else :
             return jsonify({"success" : False,"message": "Email already taken"}), 200
-        
-        
     else:
        return jsonify({"success" : False ,"message": "Email Invalid" ,}), 400
     
@@ -46,7 +44,6 @@ def submitdata(name,email,password):
 
 
 def sendOTP(email):
-    digits = "0123456789"
     global OTP
     otp = random.randint(100000, 999999)
     OTP[email] = otp
