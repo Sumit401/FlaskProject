@@ -1,5 +1,4 @@
-from flask import Blueprint, jsonify, current_app
-from flask_mysqldb import MySQL
+from flask import Blueprint, jsonify
 
 about_bp = Blueprint('about', __name__)
 
@@ -36,4 +35,4 @@ def about():
                 mapData["data"].append(map)
         
         # Return the data as JSON
-        return jsonify(mapData)
+        return jsonify(mapData),200

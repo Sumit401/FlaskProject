@@ -3,6 +3,7 @@ from .home import home_bp
 from .about import about_bp
 from .contact import contact_bp
 from .signup import signup_bp
+from .verifyOTP import verifyOTP_bp
 from flask_mysqldb import MySQL
 
 def create_app():
@@ -18,5 +19,6 @@ def create_app():
     app.register_blueprint(about_bp)
     app.register_blueprint(contact_bp)
     app.register_blueprint(signup_bp)
+    app.register_blueprint(verifyOTP_bp)
 
     return app

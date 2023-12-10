@@ -2,9 +2,11 @@ from flask import Blueprint,request,jsonify
 import smtplib
 from email.message import EmailMessage
 import math, random
-import re
+import re as RegularExpression
+import MySQLdb
 
 signup_bp = Blueprint('signup', __name__)
+OTP = {}
 
 @signup_bp.route('/signup', methods=["POST"])
 def signup() :
@@ -13,32 +15,47 @@ def signup() :
     password = request.form["password"]
 
     regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
-    if(re.fullmatch(string=email,pattern=regex)):
-        digits = "0123456789"
-        OTP = ""
-    
-    # length of password can be changed
-    # by changing value in range
-        for i in range(6) :
-            OTP += digits[math.floor(random.random() * 10)]
-
+    if(RegularExpression.fullmatch(string=email,pattern=regex)):
         
-        data = smtplib.SMTP("smtp.gmail.com",587)
-        data.starttls()
-        data.login("sumitsinha401@gmail.com","lykv hsdo nsyb mnrj")
-        msg = EmailMessage()
-        msg['Subject'] = "OTP from Sumit"
-        msg['From'] = "sumitsinha401@gmail.com"
-        msg['To'] = email
-        msg.set_content("Your otp for email verification is " + OTP)
-        print("mail sent")
-        data.send_message(msg) 
-        return jsonify({"success" : True,"message": "OTP sent to " +email}), 200
+        var = submitdata(name,email,password)
+        if(var):
+            sendOTP(email)
+            return jsonify({"success" : True,"message": "OTP sent to " +email}), 200
+        else :
+            return jsonify({"success" : False,"message": "Email already taken"}), 200
+        
+        
     else:
        return jsonify({"success" : False ,"message": "Email Invalid" ,}), 400
+    
+def submitdata(name,email,password):
+    from app import mysql
+
+    try: 
+    # Execute a SQL query to select all rows from the 'users' table
+        cursor = mysql.connection.cursor()
+        sql = "Insert into users (name,email,password) VALUES (%s, %s, %s)"
+        val = (name,email,password)
+        cursor.execute(sql,val)
+        mysql.connection.commit()
+        cursor.close()
+        return True
+    except MySQLdb._exceptions.IntegrityError:
+        print("error")
+        return False
 
 
-
-    
-    
-    
+def sendOTP(email):
+    digits = "0123456789"
+    global OTP
+    otp = random.randint(100000, 999999)
+    OTP[email] = otp
+    data = smtplib.SMTP("smtp.gmail.com",587)
+    data.starttls()
+    data.login("sumit401sinha@gmail.com","uere uwdk fcnz tuon")
+    msg = EmailMessage()
+    msg['Subject'] = "OTP from Sumit"
+    msg['From'] = "sumit401sinha@gmail.com"
+    msg['To'] = email
+    msg.set_content("Your otp for email verification is " + str(otp))
+    data.send_message(msg)
