@@ -1,4 +1,6 @@
-from flask import Blueprint, request,jsonify
+from flask import Blueprint, request,jsonify,current_app
+import jwt
+from datetime import datetime, timedelta
 
 login_bp = Blueprint('login', __name__)
 
@@ -23,6 +25,10 @@ def getData(email,password):
     else:
         for all in data:
             if(str(all[6]) == "None"):
-                return jsonify({"success":False, "data" : "Login Sucessfull but OTP not verified"}), 401
+                return jsonify({"success":False, "data" : "Login Sucessful but OTP not verified"}), 401
             else:
-                return jsonify({"sucess" : True,"data" : "Login Sucessful OTP Verified"})
+                token = jwt.encode(payload={"data" : {
+                    "email" : all[2],
+                    "id" : all[0]
+                }, "exp" : (datetime.utcnow() + timedelta(minutes=10))},key=current_app.config['secretKey'],)
+                return jsonify({"success" : True,"data" : "Login Sucessful OTP Verified","token": token, "value" : all[2]})
