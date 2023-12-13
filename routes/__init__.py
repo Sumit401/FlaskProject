@@ -16,6 +16,8 @@ def create_app():
     app.config['MYSQL_PASSWORD'] = ''
     app.config['MYSQL_DB'] = 'sumit'
     app.config['secretKey'] = "b4e328a84a0f4d9484444b2708847078"
+    app.config["email"] = "sumit401sinha@gmail.com"
+    app.config["password"] = "uere uwdk fcnz tuon"
 
     app.register_blueprint(home_bp)
     app.register_blueprint(about_bp)

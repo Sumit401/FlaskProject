@@ -1,4 +1,4 @@
-from flask import Blueprint,request,jsonify
+from flask import Blueprint,request,jsonify, current_app
 import smtplib
 from email.message import EmailMessage
 import random
@@ -49,10 +49,10 @@ def sendOTP(email):
     OTP[email] = otp
     data = smtplib.SMTP("smtp.gmail.com",587)
     data.starttls()
-    data.login("sumit401sinha@gmail.com","uere uwdk fcnz tuon")
+    data.login(current_app.config["email"],current_app.config["password"])
     msg = EmailMessage()
-    msg['Subject'] = "OTP from Sumit"
-    msg['From'] = "sumit401sinha@gmail.com"
+    msg['Subject'] = "Email verification Required"
+    msg['From'] = current_app.config["email"]
     msg['To'] = email
-    msg.set_content("Your otp for email verification is " + str(otp))
+    msg.set_content("Your OTP for email verification is " + str(otp))
     data.send_message(msg)

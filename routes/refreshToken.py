@@ -4,7 +4,7 @@ import jwt
 
 refreshToken_bp = Blueprint('refreshToken', __name__)
 
-@refreshToken_bp.route('/refreshToken')
+@refreshToken_bp.route('/refreshToken',  methods=['GET'])
 def refreshToken():
     token = request.headers.get("Authorization")
 

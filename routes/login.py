@@ -19,7 +19,6 @@ def getData(email,password):
     val = (email,password)
     cursor.execute(sql,val)
     data = cursor.fetchall()
-    cursor.close()
     if not data:
         return jsonify({"success": False, "data" : "Invalid Credentials"}),400
     else:
@@ -31,4 +30,9 @@ def getData(email,password):
                     "email" : all[2],
                     "id" : all[0]
                 }, "exp" : (datetime.utcnow() + timedelta(minutes=10))},key=current_app.config['secretKey'],)
+                sql = "Update users set token = (%s) where email = (%s)"
+                val = (token,email)
+                cursor.execute(sql,val)
+                mysql.connection.commit()
                 return jsonify({"success" : True,"data" : "Login Sucessful OTP Verified","token": token, "value" : all[2]})
+    cursor.close()
