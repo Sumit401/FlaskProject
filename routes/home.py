@@ -1,4 +1,5 @@
 from flask import Blueprint
+
 from verifyToken import token_required
 
 home_bp = Blueprint('home', __name__)

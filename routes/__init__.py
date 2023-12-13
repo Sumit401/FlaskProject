@@ -1,12 +1,16 @@
+from firebase_admin import credentials, initialize_app
 from flask import Flask
-from .home import home_bp
+
 from .about import about_bp
 from .contact import contact_bp
-from .signup import signup_bp
-from .verifyOTP import verifyOTP_bp
+from .home import home_bp
 from .login import login_bp
 from .refreshToken import refreshToken_bp
-from flask_mysqldb import MySQL
+from .signup import signup_bp
+from .verifyOTP import verifyOTP_bp
+
+cred = credentials.Certificate("firebase.json")
+def_app = initialize_app(cred)
 
 def create_app():
 

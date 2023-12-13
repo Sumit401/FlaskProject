@@ -1,6 +1,8 @@
-from flask import Blueprint,jsonify,request,current_app
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
+
 import jwt
+from flask import Blueprint, current_app, jsonify, request
+from firebase_admin import firestore
 
 refreshToken_bp = Blueprint('refreshToken', __name__)
 
@@ -15,10 +17,14 @@ def refreshToken():
 
     try:
         oldToken = jwt.decode(jwt=token,key= current_app.config['secretKey'],algorithms=['HS256'],options={"verify_signature": False},)
-        refresh_Token = jwt.encode(payload={"data" :  oldToken["data"], "exp" : (datetime.utcnow() + timedelta(minutes=10))},key=current_app.config['secretKey'],)
-    except jwt.ExpiredSignatureError:
-        return "abcdx"
-    except jwt.InvalidTokenError:
-        return "abcdef"
 
-    return jsonify({"token":refresh_Token, "success" : True})
+        if(firestore.client().collection("users").document(oldToken["data"]["email"]).get().to_dict().get("token") == token):
+            refresh_Token = jwt.encode(payload={"data" :  oldToken["data"], "exp" : (datetime.utcnow() + timedelta(minutes=10))},key=current_app.config['secretKey'],)
+        else:
+            return jsonify({"success" : False,"data" : "unauthenticated"}),400
+    except jwt.ExpiredSignatureError:
+        return jsonify({"success" : False,"data" : "unauthenticated"}),400
+    except jwt.InvalidTokenError:
+        return jsonify({"success" : False,"data" : "unauthenticated"}),400
+
+    return jsonify({"token":refresh_Token, "success" : True}),200

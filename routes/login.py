@@ -1,6 +1,8 @@
-from flask import Blueprint, request,jsonify,current_app
-import jwt
 from datetime import datetime, timedelta
+
+import jwt
+from flask import Blueprint, current_app, jsonify, request
+from firebase_admin import firestore
 
 login_bp = Blueprint('login', __name__)
 
@@ -13,26 +15,21 @@ def login():
     return (data)
 
 def getData(email,password):
-    from app import mysql
-    cursor = mysql.connection.cursor()
-    sql = "Select * from users where email = (%s) AND password = (%s)"
-    val = (email,password)
-    cursor.execute(sql,val)
-    data = cursor.fetchall()
-    if not data:
-        return jsonify({"success": False, "data" : "Invalid Credentials"}),400
-    else:
-        for all in data:
-            if(str(all[6]) == "None"):
-                return jsonify({"success":False, "data" : "Login Sucessful but OTP not verified"}), 401
+    
+    doc_ref = firestore.client().collection("users").document(email)
+    doc_snapshot = doc_ref.get()
+    if doc_snapshot.exists:
+        document_data = doc_snapshot.to_dict()
+        if document_data.get('password') == password: 
+            if document_data.get("verifiedAt") == None:
+                return jsonify({"success": True, "data" : "Login Sucessful but Email verification not done"}),203
             else:
                 token = jwt.encode(payload={"data" : {
-                    "email" : all[2],
-                    "id" : all[0]
+                    "email" : email,
                 }, "exp" : (datetime.utcnow() + timedelta(minutes=10))},key=current_app.config['secretKey'],)
-                sql = "Update users set token = (%s) where email = (%s)"
-                val = (token,email)
-                cursor.execute(sql,val)
-                mysql.connection.commit()
-                return jsonify({"success" : True,"data" : "Login Sucessful OTP Verified","token": token, "value" : all[2]})
-    cursor.close()
+                doc_ref.update({"token" : token})
+                return jsonify({"success": True, "data" : "Login SuccessFul", "token" : token}),200
+        
+    else:
+        return jsonify({"success": False, "data" : "Invalid Credentials"}),400
+    

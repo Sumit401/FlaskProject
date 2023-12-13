@@ -1,13 +1,13 @@
-from flask import Blueprint,request,jsonify, current_app
-import smtplib
-from email.message import EmailMessage
 import random
 import re as RegularExpression
-import MySQLdb
+import smtplib
+from email.message import EmailMessage
+
+from firebase_admin import firestore
+from flask import Blueprint, current_app, jsonify, request
 
 signup_bp = Blueprint('signup', __name__)
 OTP = {}
-
 @signup_bp.route('/signup', methods=["POST"])
 def signup() :
     name = request.form["name"]
@@ -27,19 +27,21 @@ def signup() :
        return jsonify({"success" : False ,"message": "Email Invalid" ,}), 400
     
 def submitdata(name,email,password):
-    from app import mysql
-
-    try: 
-    # Execute a SQL query to select all rows from the 'users' table
-        cursor = mysql.connection.cursor()
-        sql = "Insert into users (name,email,password) VALUES (%s, %s, %s)"
-        val = (name,email,password)
-        cursor.execute(sql,val)
-        mysql.connection.commit()
-        cursor.close()
+    try:
+        user_ref = firestore.client().collection("users")
+        document_ref = user_ref.document(email)
+        document_snapshot = document_ref.get()
+        if document_snapshot.exists:
+            return False
+        else:
+            documents = user_ref.stream()
+            total_documents = 0
+            for document in documents:
+                total_documents += 1
+            user_ref.document(email).set({"id" : total_documents+1,"email" : email, "name" : name, "password" : password, "verifiedAt" : None, "token" : None})
         return True
-    except MySQLdb._exceptions.IntegrityError:
-        print("error")
+    except Exception as e:
+        print(e)
         return False
 
 

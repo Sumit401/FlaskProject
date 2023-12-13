@@ -3,6 +3,7 @@ from .signup import OTP
 import datetime
 import jwt
 from datetime import datetime, timedelta
+from firebase_admin import firestore
 
 verifyOTP_bp = Blueprint('verifyotp', __name__)
 
@@ -22,30 +23,15 @@ def verifyotp():
     
 
 def submitdata(email):
-    from app import mysql
-    cursor = mysql.connection.cursor()
-    
-    sql = "Update users set verifiedAt = (%s) where email = (%s)"
-    val = (datetime.now(),email)
-    cursor.execute(sql,val)
-    cursor.close()
-    mysql.connection.commit()
-    cursor2 = mysql.connection.cursor()
-    sql1 = "SELECT id FROM `users` WHERE email = (%s)"
-    val1 = (email,)
-    cursor2.execute(sql1, val1)
-    data = cursor2.fetchall()
-    cursor2.close()
-    cursor3 = mysql.connection.cursor()
-    token = jwt.encode(payload={"data" : {
-                    "email" : email,
-                    "id" : data[0][0]
-                }, "exp" : (datetime.utcnow() + timedelta(minutes=10))},key=current_app.config['secretKey'],)
-    
-    sql2 = "Update users set token = (%s) where email = (%s)"
-    val2 = (token,email,)
-    cursor3.execute(sql2,val2)
-    cursor3.close()
-    mysql.connection.commit()
+    try:
+        token = jwt.encode(payload={"data" : {"email" : email}, "exp" : (datetime.utcnow() + timedelta(minutes=10))},key=current_app.config['secretKey'],)
+        user_ref = firestore.client().collection("users")
+        document_ref = user_ref.document(email)
+        document_snapshot = document_ref.get()
+        if document_snapshot.exists:
+            user_ref.document(email).update({"verifiedAt" : datetime.utcnow(), "token" : token})
+        else:
+            return False
+    except Exception as e:
+        return False
     return token
-    
