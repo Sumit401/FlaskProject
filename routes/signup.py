@@ -16,9 +16,8 @@ def signup() :
 
     regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
     if(RegularExpression.fullmatch(string=email,pattern=regex)):
-        
         var = submitdata(name,email,password)
-        if(var):
+        if(var)  :
             sendOTP(email)
             return jsonify({"success" : True,"message": "OTP sent to " +email}), 200
         else :
@@ -29,7 +28,7 @@ def signup() :
 def submitdata(name,email,password):
     try:
         user_ref = firestore.client().collection("users")
-        document_ref = user_ref.document(email)
+        document_ref = user_ref.document(email.lower())
         document_snapshot = document_ref.get()
         if document_snapshot.exists:
             return False
